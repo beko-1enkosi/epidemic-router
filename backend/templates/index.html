@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Epidemic Router</title>
+  
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <h1>⬡ Network Routing Terminal</h1>
+  <div class="stats">
+    <div class="stat"><label>SIGNAL ID</label><p id="stat-id">—</p></div>
+    <div class="stat"><label>RISK SCORE</label><p id="stat-risk">—</p></div>
+    <div class="stat"><label>TOPOLOGY</label><p id="stat-topology">Standard</p></div>
+  </div>
+</header>
+
+<div class="status-bar" id="status-bar">Signal Verified. System Nominal.</div>
+
+<div class="terminal">
+  <div class="terminal-label">&gt; LIVE TERMINAL FEED</div>
+  <div id="terminal-feed"></div>
+</div>
+
+<div id="graph-container"></div>
+
+<div class="buttons">
+  <div class="btn-row">
+    <button onclick="triggerNormal()">Generate Normal Signal</button>
+    <button onclick="triggerAnomaly()">Generate Proxy (Anomaly)</button>
+  </div>
+  <button id="btn-reset" onclick="resetSystem()">Reset System</button>
+</div>
+
+<script src="/static/main.js"></script>
+
+</body>
+</html>
