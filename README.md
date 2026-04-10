@@ -21,6 +21,8 @@ When a district's risk score spikes, the algorithm doesn't wait. It reroutes.
 
 ## Live Demo
 
+🌐 **[epidemic-router-demo.onrender.com](https://epidemic-router-demo.onrender.com/)**
+
 | State | Behaviour |
 |-------|-----------|
 | 🟢 Normal | Dijkstra routes mobile clinics via the shortest path |
