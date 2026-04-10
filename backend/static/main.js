@@ -15,7 +15,7 @@ let nodes = [], edges = [], activePath = [];
 const svg = d3.select("#graph-container").append("svg")
   .attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`)
   .style("max-height", "380px");
-  
+
 const linkGroup = svg.append("g");
 const nodeGroup = svg.append("g");
 
@@ -37,7 +37,6 @@ function render(graphData) {
   nodes = Object.entries(graphData.nodes).map(([id, d]) => ({ id, ...d }));
   edges = graphData.edges;
 
-  // Links
   const links = linkGroup.selectAll(".link").data(edges, d => d.source + d.target);
   links.enter().append("line").attr("class", "link")
     .merge(links)
@@ -47,7 +46,6 @@ function render(graphData) {
     .attr("y2", d => POSITIONS[d.target].y)
     .attr("class", d => "link" + (isPathEdge(d.source, d.target) ? " active-path" : ""));
 
-  // Nodes
   const nodeEl = nodeGroup.selectAll(".node").data(nodes, d => d.id);
   const enter = nodeEl.enter().append("g").attr("class", "node")
     .attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
@@ -129,5 +127,4 @@ async function resetSystem() {
   await loadState();
 }
 
-// Initial load
 loadState();
