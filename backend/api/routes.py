@@ -26,6 +26,13 @@ def inject_anomaly():
     route = graph.get_optimal_route("Hub_A", signal['district'])
     return jsonify({"signal": signal, "optimal_route": route})
 
+@router_bp.route('/api/inject-normal', methods=['POST'])
+def inject_normal():
+    signal = generate_normal_signal(DISTRICTS)
+    graph.update_risk(signal['district'], signal['risk_score'])
+    route = graph.get_optimal_route("Hub_A", "Outpost_E")
+    return jsonify({"signal": signal, "optimal_route": route})
+
 @router_bp.route('/api/reset', methods=['POST'])
 def reset():
     """Resets all districts to baseline risk."""
