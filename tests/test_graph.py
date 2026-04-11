@@ -10,16 +10,21 @@ class TestEpidemicGraph(unittest.TestCase):
     # --- Graph Structure Tests ---
 
     def test_correct_number_of_nodes(self):
-        """Graph should have exactly 5 district nodes."""
-        self.assertEqual(len(self.graph.graph.nodes), 5)
+        """Graph should have exactly 10 district nodes."""
+        self.assertEqual(len(self.graph.graph.nodes), 10)
 
     def test_correct_number_of_edges(self):
-        """Graph should have exactly 6 road connections."""
-        self.assertEqual(len(self.graph.graph.edges), 6)
+        """Graph should have exactly 16 road connections."""
+        self.assertEqual(len(self.graph.graph.edges), 16)
 
     def test_all_nodes_exist(self):
         """All expected district names should be present."""
-        expected = {"Hub_A", "Clinic_B", "District_C", "Village_D", "Outpost_E"}
+        expected = {
+            "Hub_A", "Hub_B",
+            "Clinic_B", "Clinic_C", "Clinic_F",
+            "District_C", "Village_D", "Village_G",
+            "Outpost_E", "Outpost_H"
+        }
         self.assertEqual(set(self.graph.graph.nodes), expected)
 
     def test_baseline_risk_is_ten_percent(self):

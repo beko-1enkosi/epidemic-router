@@ -13,23 +13,41 @@ class EpidemicGraph:
         self._build_baseline_map()
 
     def _build_baseline_map(self):
-        """
-        Populates the initial graph with predefined nodes (districts) and edges (roads).
-        Sets the default baseline infection risk for all nodes to 0.1 (10%).
-        """
-        districts = ["Hub_A", "Clinic_B", "District_C", "Village_D", "Outpost_E"]
+        districts = [
+            "Hub_A", "Hub_B",
+            "Clinic_B", "Clinic_C", "Clinic_F",
+            "District_C", "Village_D", "Village_G",
+            "Outpost_E", "Outpost_H"
+        ]
         for district in districts:
             self.graph.add_node(district, risk=0.1)
 
         roads = [
+            # Hub_A connections
             ("Hub_A", "Clinic_B", 10),
-            ("Clinic_B", "District_C", 15),
             ("Hub_A", "Village_D", 25),
+            ("Hub_A", "Hub_B", 40),
+            # Hub_B connections
+            ("Hub_B", "Clinic_F", 12),
+            ("Hub_B", "Village_G", 20),
+            # Clinic_B connections
+            ("Clinic_B", "District_C", 15),
+            ("Clinic_B", "Outpost_E", 30),
+            ("Clinic_B", "Clinic_C", 18),
+            # Clinic_C connections
+            ("Clinic_C", "District_C", 10),
+            ("Clinic_C", "Outpost_H", 22),
+            # Clinic_F connections
+            ("Clinic_F", "Village_G", 8),
+            ("Clinic_F", "Outpost_H", 25),
+            # Village connections
             ("Village_D", "District_C", 10),
+            ("Village_G", "Outpost_H", 15),
+            # District/Outpost connections
             ("District_C", "Outpost_E", 5),
-            ("Clinic_B", "Outpost_E", 30)
+            ("Outpost_E", "Outpost_H", 20),
         ]
-        
+
         for source, target, distance in roads:
             self.graph.add_edge(source, target, distance=distance)
 

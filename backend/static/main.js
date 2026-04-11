@@ -1,20 +1,30 @@
-const WIDTH = 620, HEIGHT = 400;
+const WIDTH = 1000, HEIGHT = 560;
 const POSITIONS = {
-  Hub_A:      { x: 100, y: 200 },
-  Clinic_B:   { x: 240, y: 200 },
-  District_C: { x: 380, y: 110 },
-  Village_D:  { x: 380, y: 290 },
-  Outpost_E:  { x: 520, y: 200 },
+  Hub_A:      { x: 130, y: 260 },
+  Hub_B:      { x: 130, y: 450 },
+  Clinic_B:   { x: 320, y: 160 },
+  Clinic_C:   { x: 480, y: 290 },
+  Clinic_F:   { x: 320, y: 450 },
+  District_C: { x: 620, y: 90  },
+  Village_D:  { x: 620, y: 350 },
+  Village_G:  { x: 480, y: 480 },
+  Outpost_E:  { x: 840, y: 160 },
+  Outpost_H:  { x: 840, y: 420 },
 };
+
 const ICONS = {
-  Hub_A: "✳", Clinic_B: "🏥", District_C: "🏠", Village_D: "🏘", Outpost_E: "📡"
+    Hub_A: "✳", Hub_B: "✳",
+    Clinic_B: "🏥", Clinic_C: "🏥", Clinic_F: "🏥",
+    District_C: "🏠",
+    Village_D: "🏘", Village_G: "🏘",
+    Outpost_E: "📡", Outpost_H: "📡"
 };
 
 let nodes = [], edges = [], activePath = [];
 
 const svg = d3.select("#graph-container").append("svg")
   .attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`)
-  .style("max-height", "380px");
+  .style("max-height", "400px");
 
 const linkGroup = svg.append("g");
 const nodeGroup = svg.append("g");
@@ -49,10 +59,10 @@ function render(graphData) {
   const nodeEl = nodeGroup.selectAll(".node").data(nodes, d => d.id);
   const enter = nodeEl.enter().append("g").attr("class", "node")
     .attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
-  enter.append("circle").attr("r", 28);
+  enter.append("circle").attr("r", 38);
   enter.append("text").attr("y", 4).attr("class", "icon");
-  enter.append("text").attr("y", 44).attr("class", "name-label");
-  enter.append("text").attr("y", -34).attr("class", "risk-label");
+  enter.append("text").attr("y", 56).attr("class", "name-label");
+  enter.append("text").attr("y", -44).attr("class", "risk-label");
 
   const all = nodeEl.merge(enter);
   all.attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
