@@ -9,8 +9,7 @@
 
 In fragile or under-resourced health systems, outbreak response is **reactive**. By the time a cluster is confirmed and mobile clinics are dispatched, the window for containment has already closed. Supply routes are planned using static maps, not live risk data.
 
-This kills people.
-
+This delay can cost lives, especially in under-resourced communities.
 ## The Solution
 
 The **Anticipatory Epidemic Routing Engine** monitors a network of districts for environmental proxy signals, anomalies in water quality, pharmacy purchase spikes, sanitation failures, and uses **dynamic graph optimization** to instantly recalculate the safest and most efficient dispatch routes *before* an outbreak is confirmed.
@@ -39,7 +38,7 @@ This project is built around **Dijkstra's Algorithm with composite dynamic edge 
 edge_weight = distance × (1 + destination_risk)
 ```
 
-This means the algorithm does not just optimize for distance — it treats high-risk districts as heavier nodes, naturally routing around outbreak clusters or prioritizing them for rapid dispatch depending on the use case.
+This means the algorithm does not just optimize for distance — it treats high-risk districts as heavier routing targets, allowing the system to dynamically avoid unstable or potentially infected areas when calculating safer dispatch paths.
 
 ### Example Output
 
@@ -168,7 +167,7 @@ Visit `http://localhost:5000` in your browser.
 python -m unittest tests.test_graph -v
 ```
 
-Expected output: **17 tests passing**, covering:
+Expected output: **19 tests passing**, covering:
 - Graph structure integrity
 - Baseline risk validation
 - Risk update correctness

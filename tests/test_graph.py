@@ -112,6 +112,15 @@ class TestEpidemicGraph(unittest.TestCase):
         fresh_graph = EpidemicGraph()
         self.assertAlmostEqual(fresh_graph.graph.nodes["District_C"]['risk'], 0.1)
 
+    def test_invalid_source_returns_error(self):
+        result = self.graph.get_optimal_route("Fake_Node", "Outpost_E")
+        self.assertIn("error", result)
+        self.assertEqual(result["cost"], -1.0)
+
+    def test_invalid_risk_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            self.graph.update_risk("District_C", 1.5)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -1,11 +1,13 @@
-const WIDTH = 1000, HEIGHT = 560;
+const WIDTH = 1000;
+const HEIGHT = 560;
+
 const POSITIONS = {
   Hub_A:      { x: 130, y: 260 },
   Hub_B:      { x: 130, y: 450 },
   Clinic_B:   { x: 320, y: 160 },
   Clinic_C:   { x: 480, y: 290 },
   Clinic_F:   { x: 320, y: 450 },
-  District_C: { x: 620, y: 90  },
+  District_C: { x: 620, y: 90 },
   Village_D:  { x: 620, y: 350 },
   Village_G:  { x: 480, y: 480 },
   Outpost_E:  { x: 840, y: 160 },
@@ -13,16 +15,22 @@ const POSITIONS = {
 };
 
 const ICONS = {
-    Hub_A: "✳", Hub_B: "✳",
-    Clinic_B: "🏥", Clinic_C: "🏥", Clinic_F: "🏥",
-    District_C: "🏠",
-    Village_D: "🏘", Village_G: "🏘",
-    Outpost_E: "📡", Outpost_H: "📡"
+  Hub_A: "✳",
+  Hub_B: "✳",
+  Clinic_B: "🏥",
+  Clinic_C: "🏥",
+  Clinic_F: "🏥",
+  District_C: "🏠",
+  Village_D: "🏘",
+  Village_G: "🏘",
+  Outpost_E: "📡",
+  Outpost_H: "📡",
 };
 
-let nodes = [], edges = [], activePath = [];
+let activePath = [];
 
-const svg = d3.select("#graph-container").append("svg")
+const svg = d3.select("#graph-container")
+  .append("svg")
   .attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`)
   .style("max-height", "400px");
 
@@ -35,106 +43,198 @@ function riskColor(risk) {
   return "#00ff88";
 }
 
+function edgeKey(d) {
+  return [d.source, d.target].sort().join("-");
+}
+
 function isPathEdge(source, target) {
-  for (let i = 0; i < activePath.length - 1; i++) {
-    const a = activePath[i], b = activePath[i + 1];
-    if ((a === source && b === target) || (a === target && b === source)) return true;
+  for (let i = 0; i < activePath.length - 1; i += 1) {
+    const a = activePath[i];
+    const b = activePath[i + 1];
+    if ((a === source && b === target) || (a === target && b === source)) {
+      return true;
+    }
   }
   return false;
 }
 
-function render(graphData) {
-  nodes = Object.entries(graphData.nodes).map(([id, d]) => ({ id, ...d }));
-  edges = graphData.edges;
+function setText(id, value) {
+  document.getElementById(id).textContent = value;
+}
 
-  const links = linkGroup.selectAll(".link").data(edges, d => d.source + d.target);
-  links.enter().append("line").attr("class", "link")
+function setRiskDisplay(value, color) {
+  const el = document.getElementById("stat-risk");
+  el.textContent = value;
+  el.style.color = color;
+}
+
+function setStatus(message, isAlert = false) {
+  const bar = document.getElementById("status-bar");
+  bar.textContent = message;
+  bar.className = isAlert ? "status-bar alert" : "status-bar";
+}
+
+function toggleResetButton(show) {
+  document.getElementById("btn-reset").style.display = show ? "inline-block" : "none";
+}
+
+function generateSignalId(prefix) {
+  return `${prefix}-${Math.floor(Math.random() * 9000 + 1000)}`;
+}
+
+function logTerminal(message) {
+  const feed = document.getElementById("terminal-feed");
+  const now = new Date().toLocaleTimeString();
+
+  const line = document.createElement("div");
+  line.className = "terminal-line";
+  line.textContent = `[${now}] ${message}`;
+
+  feed.prepend(line);
+
+  while (feed.children.length > 8) {
+    feed.removeChild(feed.lastChild);
+  }
+}
+
+function resetUiState() {
+  setText("stat-id", "—");
+  setRiskDisplay("—", "#00ff88");
+  setText("stat-topology", "Standard");
+  setStatus("Signal Verified. System Nominal.");
+  toggleResetButton(false);
+}
+
+function updateUiFromSignal(signal, isAnomaly) {
+  setText("stat-id", generateSignalId(isAnomaly ? "PX" : "NS"));
+  setRiskDisplay(`${Math.round(signal.risk_score * 100)}%`, isAnomaly ? "#ff4444" : "#00ff88");
+  setText("stat-topology", isAnomaly ? "Bypass" : "Standard");
+
+  if (isAnomaly) {
+    setStatus(`⚠ High Risk Anomaly at ${signal.district}. Rerouting...`, true);
+    toggleResetButton(true);
+    logTerminal(JSON.stringify({
+      origin: "Hub_A",
+      dest: "Outpost_E",
+      proxy_detect: signal.district,
+      risk: signal.risk_score,
+      action: "RE_ROUTE_TRIGGERED",
+    }));
+  } else {
+    setStatus("Signal Verified. Using Standard Optimal Route.");
+    toggleResetButton(false);
+    logTerminal(JSON.stringify({
+      origin: "Hub_A",
+      dest: "Outpost_E",
+      risk: signal.risk_score,
+      action: "STANDARD_FORWARD",
+    }));
+  }
+}
+
+function render(graphData) {
+  const nodes = Object.entries(graphData.nodes).map(([id, data]) => ({ id, ...data }));
+  const edges = graphData.edges;
+
+  const links = linkGroup.selectAll(".link").data(edges, edgeKey);
+
+  links.enter()
+    .append("line")
+    .attr("class", "link")
     .merge(links)
     .attr("x1", d => POSITIONS[d.source].x)
     .attr("y1", d => POSITIONS[d.source].y)
     .attr("x2", d => POSITIONS[d.target].x)
     .attr("y2", d => POSITIONS[d.target].y)
-    .attr("class", d => "link" + (isPathEdge(d.source, d.target) ? " active-path" : ""));
+    .attr("class", d => `link${isPathEdge(d.source, d.target) ? " active-path" : ""}`);
 
-  const nodeEl = nodeGroup.selectAll(".node").data(nodes, d => d.id);
-  const enter = nodeEl.enter().append("g").attr("class", "node")
+  links.exit().remove();
+
+  const nodeSelection = nodeGroup.selectAll(".node").data(nodes, d => d.id);
+
+  const nodeEnter = nodeSelection.enter()
+    .append("g")
+    .attr("class", "node")
     .attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
-  enter.append("circle").attr("r", 38);
-  enter.append("text").attr("y", 4).attr("class", "icon");
-  enter.append("text").attr("y", 56).attr("class", "name-label");
-  enter.append("text").attr("y", -44).attr("class", "risk-label");
 
-  const all = nodeEl.merge(enter);
-  all.attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
-  all.select("circle")
-    .attr("fill", d => d.risk >= 0.7 ? "#2a0808" : "#0a1a2a")
+  nodeEnter.append("circle").attr("r", 38);
+  nodeEnter.append("text").attr("y", 4).attr("class", "icon");
+  nodeEnter.append("text").attr("y", 56).attr("class", "name-label");
+  nodeEnter.append("text").attr("y", -44).attr("class", "risk-label");
+
+  const allNodes = nodeSelection.merge(nodeEnter);
+
+  allNodes
+    .attr("transform", d => `translate(${POSITIONS[d.id].x},${POSITIONS[d.id].y})`);
+
+  allNodes.select("circle")
+    .attr("fill", d => (d.risk >= 0.7 ? "#2a0808" : "#0a1a2a"))
     .attr("stroke", d => riskColor(d.risk));
-  all.select(".icon").text(d => ICONS[d.id]);
-  all.select(".name-label").text(d => d.id.replace("_", " ").toUpperCase());
-  all.select(".risk-label").text(d => `Risk: ${Math.round(d.risk * 100)}%`)
-    .attr("fill", d => riskColor(d.risk));
-}
 
-function logTerminal(msg) {
-  const feed = document.getElementById("terminal-feed");
-  const now = new Date().toLocaleTimeString();
-  const line = document.createElement("div");
-  line.className = "terminal-line";
-  line.textContent = `[${now}] ${msg}`;
-  feed.prepend(line);
-  if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+  allNodes.select(".icon")
+    .text(d => ICONS[d.id] || "•");
+
+  allNodes.select(".name-label")
+    .text(d => d.id.replace(/_/g, " ").toUpperCase());
+
+  allNodes.select(".risk-label")
+    .text(d => `Risk: ${Math.round(d.risk * 100)}%`)
+    .attr("fill", d => riskColor(d.risk));
+
+  nodeSelection.exit().remove();
 }
 
 async function loadState() {
-  const res = await fetch("/api/state");
-  const data = await res.json();
-  render(data);
+  try {
+    const response = await fetch("/api/state");
+    const data = await response.json();
+    render(data);
+  } catch (error) {
+    console.error("Failed to load graph state:", error);
+    setStatus("System error: unable to load graph state.", true);
+  }
 }
 
 async function triggerNormal() {
-  const res = await fetch("/api/inject-normal", { method: "POST" });
-  const data = await res.json();
-  activePath = data.optimal_route.path;
-  const sig = data.signal;
-  document.getElementById("stat-id").textContent = "NS-" + Math.floor(Math.random()*9000+1000);
-  document.getElementById("stat-risk").textContent = Math.round(sig.risk_score * 100) + "%";
-  document.getElementById("stat-risk").style.color = "#00ff88";
-  document.getElementById("stat-topology").textContent = "Standard";
-  document.getElementById("status-bar").textContent = "Signal Verified. Using Standard Optimal Route.";
-  document.getElementById("status-bar").className = "status-bar";
-  logTerminal(JSON.stringify({ origin: "Hub_A", dest: "Outpost_E", risk: sig.risk_score, action: "STANDARD_FORWARD" }));
-  document.getElementById("btn-reset").style.display = "none";
-  await loadState();
+  try {
+    const response = await fetch("/api/inject-normal", { method: "POST" });
+    const data = await response.json();
+
+    activePath = data.optimal_route.path || [];
+    updateUiFromSignal(data.signal, false);
+    await loadState();
+  } catch (error) {
+    console.error("Failed to generate normal signal:", error);
+    setStatus("System error: failed to generate normal signal.", true);
+  }
 }
 
 async function triggerAnomaly() {
-  const res = await fetch("/api/inject", { method: "POST" });
-  const data = await res.json();
-  activePath = data.optimal_route.path;
-  const sig = data.signal;
-  document.getElementById("stat-id").textContent = "PX-" + Math.floor(Math.random()*9000+1000);
-  document.getElementById("stat-risk").textContent = Math.round(sig.risk_score * 100) + "%";
-  document.getElementById("stat-risk").style.color = "#ff4444";
-  document.getElementById("stat-topology").textContent = "Bypass";
-  document.getElementById("status-bar").textContent = `⚠ High Risk Anomaly at ${sig.district}. Rerouting...`;
-  document.getElementById("status-bar").className = "status-bar alert";
-  logTerminal(JSON.stringify({ origin: "Hub_A", dest: "Outpost_E", proxy_detect: sig.district, risk: sig.risk_score, action: "RE_ROUTE_TRIGGERED" }));
-  document.getElementById("btn-reset").style.display = "inline-block";
-  await loadState();
+  try {
+    const response = await fetch("/api/inject", { method: "POST" });
+    const data = await response.json();
+
+    activePath = data.optimal_route.path || [];
+    updateUiFromSignal(data.signal, true);
+    await loadState();
+  } catch (error) {
+    console.error("Failed to inject anomaly:", error);
+    setStatus("System error: failed to inject anomaly.", true);
+  }
 }
 
 async function resetSystem() {
-  await fetch("/api/reset", { method: "POST" });
-  activePath = [];
-  document.getElementById("stat-id").textContent = "—";
-  document.getElementById("stat-risk").textContent = "—";
-  document.getElementById("stat-risk").style.color = "#00ff88";
-  document.getElementById("stat-topology").textContent = "Standard";
-  document.getElementById("status-bar").textContent = "Signal Verified. System Nominal.";
-  document.getElementById("status-bar").className = "status-bar";
-  document.getElementById("btn-reset").style.display = "none";
-  logTerminal("System reset. All districts restored to baseline.");
-  await loadState();
+  try {
+    await fetch("/api/reset", { method: "POST" });
+    activePath = [];
+    resetUiState();
+    logTerminal("System reset. All districts restored to baseline.");
+    await loadState();
+  } catch (error) {
+    console.error("Failed to reset system:", error);
+    setStatus("System error: failed to reset the system.", true);
+  }
 }
 
+resetUiState();
 loadState();
